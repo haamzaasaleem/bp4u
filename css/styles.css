@@ -531,7 +531,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* Promo hero (text left, colored art panel right) */
 .promo-hero { padding: 40px 0 24px; }
 .promo-hero .hero-inner { padding: 0 20px; grid-template-columns: 1fr 1.25fr; gap: 56px; }
-.promo-hero h1 { font-family: var(--font-body); font-weight: 800; font-size: clamp(2.3rem, 5vw, 3.9rem); letter-spacing: -.025em; line-height: 1.05; }
+.promo-hero h1 { font-family: var(--font-body); font-weight: 800; font-size: clamp(2.2rem, 4.4vw, 3.4rem); letter-spacing: -.025em; line-height: 1.05; }
 .promo-hero h1 em { font-family: var(--font-head); font-weight: 700; font-style: italic; color: var(--accent); letter-spacing: -.01em; }
 .promo-hero .hero-lead { font-size: 1.08rem; }
 .hero-panel {
@@ -641,3 +641,66 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .mobile-search { display: none; }
 .mobile-search .header-search { display: block; max-width: none; }
+
+/* ==========================================================================
+   Banner slider, Embroiderology Dept., business printing, owners photo
+   ========================================================================== */
+.banner-slider { position: relative; border-radius: 10px; overflow: hidden; background: #0f2a5c; box-shadow: var(--shadow); margin-bottom: 8px; }
+.banner-slider .slides { display: grid; }
+.banner-slider .slide { grid-area: 1 / 1; opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility .6s; display: block; }
+.banner-slider .slide.is-active { opacity: 1; visibility: visible; }
+.banner-slider .slide img { width: 100%; height: auto; }
+.slider-btn {
+  position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 0;
+  background: rgba(255,255,255,.9); color: var(--ink); font-size: 1.6rem; line-height: 1; cursor: pointer; box-shadow: var(--shadow);
+  display: grid; place-items: center; opacity: 0; transition: opacity .2s;
+}
+.banner-slider:hover .slider-btn, .slider-btn:focus-visible { opacity: 1; }
+.slider-btn--prev { left: 14px; }
+.slider-btn--next { right: 14px; }
+.slider-dots { position: absolute; left: 0; right: 0; bottom: 10px; display: flex; justify-content: center; gap: 8px; }
+.slider-dots button { width: 10px; height: 10px; border-radius: 999px; border: 0; padding: 0; background: rgba(255,255,255,.55); cursor: pointer; transition: width .3s, background .3s; }
+.slider-dots button[aria-current="true"] { width: 28px; background: #fff; }
+
+.wide-banner { margin: 0 0 28px; border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); }
+.wide-banner img { width: 100%; height: auto; }
+
+.promo-banner--med .pb-art { background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 32px 24px; border: 1px solid var(--line); border-right: 0; }
+.promo-banner--med .pb-logo { width: min(340px, 80%); height: auto; }
+.pb-garments { position: relative; width: 100%; aspect-ratio: 2 / 1; }
+.pb-garments > div { position: absolute !important; filter: drop-shadow(0 10px 12px rgba(0,0,0,.15)); }
+.pb-garments > div:nth-child(1) { width: 40%; left: 4%; bottom: 6%; transform: rotate(-6deg); }
+.pb-garments > div:nth-child(2) { width: 36%; left: 33%; bottom: 2%; }
+.pb-garments > div:nth-child(3) { width: 34%; right: 2%; bottom: 6%; transform: rotate(6deg); }
+.promo-banner--med .pb-text { background: linear-gradient(150deg, #13315c 0%, #1b4f7a 60%, #1c7f95 100%); }
+.check-list--light li::before { background-color: #2bb3c6; }
+.check-list--light { margin-bottom: 26px; }
+.btn--ghost-light { border-color: rgba(255,255,255,.7); color: #fff; background: transparent; }
+.btn--ghost-light:hover { background: #fff; color: #13315c; }
+
+.print-samples { background: linear-gradient(160deg, #eef3fb, #dfe8f7); border-radius: 24px; padding: 36px 24px; display: grid; place-items: center; }
+.print-samples img { width: 100%; height: auto; border-radius: 8px; box-shadow: var(--shadow-lg); }
+
+.story-photo { margin: 0; position: relative; border-radius: 24px; overflow: hidden; background: #f4f4f4; box-shadow: var(--shadow-lg); }
+.story-photo img { width: 100%; height: auto; display: block; }
+.story-photo figcaption {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 80px 28px 26px; color: #fff;
+  background: linear-gradient(to top, rgba(10,10,10,.88) 0%, rgba(10,10,10,.6) 55%, transparent 100%);
+}
+.story-photo blockquote { font-family: var(--font-head); font-style: italic; font-size: 1.12rem; line-height: 1.45; margin: 0 0 8px; }
+.story-photo cite { font-style: normal; color: var(--gold); font-weight: 600; font-size: .88rem; }
+.split > .story-photo { max-width: 460px; justify-self: center; width: 100%; }
+
+@media (max-width: 920px) {
+  .promo-banner--med .pb-art { border-right: 1px solid var(--line); border-bottom: 0; }
+  .pb-garments { min-height: 220px; }
+  .slider-btn { opacity: 1; width: 34px; height: 34px; font-size: 1.3rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .banner-slider .slide { transition: none; }
+}
+.story-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0 28px; }
+.story-stats div { background: var(--cream); border-radius: 12px; padding: 16px; }
+.story-stats strong { display: block; font-family: var(--font-head); font-size: 1.5rem; color: var(--accent); line-height: 1.2; }
+.story-stats span { font-size: .85rem; color: var(--muted); }
+@media (max-width: 640px) { .story-stats { grid-template-columns: 1fr; } }

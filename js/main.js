@@ -155,7 +155,7 @@
 
   var CAT_COPY = {
     all: ["All Products", "Embroidered medical jackets, polos, and hats, plus printed t-shirts. Pick a style, then personalize it in the Design Studio."],
-    medical: ["Medical Jackets", "Warm-up, soft shell, and fleece jackets embroidered with names, credentials, and your practice logo."],
+    medical: ["The Embroiderology Dept.", "Medical embroidery, only at Business Printing 4 U. Jackets, lab coats, and scrubs embroidered with names, credentials, and your practice logo."],
     polos: ["Polos & Business Wear", "Professional polos that make your whole team look put-together, with your logo stitched on the chest."],
     hats: ["Custom Hats", "Structured caps, truckers, and dad hats with crisp embroidered logos."],
     tees: ["Custom T-Shirts", "Bright, durable printed tees for teams, events, schools, and family reunions."]
@@ -249,6 +249,52 @@
     });
   }
 
+  /* ---------- Banner slider ---------- */
+  function initSlider() {
+    var root = $("[data-slider]");
+    if (!root) return;
+    var slides = $$(".slide", root);
+    var dotsWrap = $("[data-slide-dots]", root);
+    var idx = 0, timer = null;
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    dotsWrap.innerHTML = slides.map(function (_, i) {
+      return '<button type="button" aria-label="Show slide ' + (i + 1) + '"></button>';
+    }).join("");
+    var dots = $$("button", dotsWrap);
+
+    function go(i) {
+      idx = (i + slides.length) % slides.length;
+      slides.forEach(function (s, n) {
+        s.classList.toggle("is-active", n === idx);
+        s.setAttribute("aria-hidden", String(n !== idx));
+        s.tabIndex = n === idx ? 0 : -1;
+      });
+      dots.forEach(function (d, n) { d.setAttribute("aria-current", String(n === idx)); });
+    }
+    function play() { if (!reduce) { stop(); timer = setInterval(function () { go(idx + 1); }, 6000); } }
+    function stop() { clearInterval(timer); }
+
+    dots.forEach(function (d, n) { d.addEventListener("click", function () { go(n); play(); }); });
+    $("[data-slide-prev]", root).addEventListener("click", function () { go(idx - 1); play(); });
+    $("[data-slide-next]", root).addEventListener("click", function () { go(idx + 1); play(); });
+    root.addEventListener("mouseenter", stop);
+    root.addEventListener("mouseleave", play);
+    root.addEventListener("focusin", stop);
+
+    var startX = null;
+    root.addEventListener("touchstart", function (e) { startX = e.touches[0].clientX; stop(); }, { passive: true });
+    root.addEventListener("touchend", function (e) {
+      if (startX === null) return;
+      var dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 40) go(idx + (dx < 0 ? 1 : -1));
+      startX = null; play();
+    });
+
+    go(0);
+    play();
+  }
+
   /* ---------- Reviews scroller ---------- */
   function initReviews() {
     var row = $("[data-review-row]");
@@ -284,8 +330,11 @@
     if (prod) {
       var p = BP.PRODUCTS.filter(function (x) { return x.name === prod; })[0];
       if (p) {
-        form.product.value = BP.CATEGORIES[p.cat].name === "Medical Jackets" ? "Medical Jackets" : BP.CATEGORIES[p.cat].name;
+        form.product.value = BP.CATEGORIES[p.cat].name;
         form.message.value = "I'm interested in the " + p.name + ".\n";
+      } else {
+        var opt = $$("option", form.product).filter(function (o) { return o.value.toLowerCase().indexOf(prod.toLowerCase()) !== -1 || prod.toLowerCase().indexOf(o.value.toLowerCase().split(" ")[0]) === 0 && o.value; })[0];
+        if (opt) form.product.value = opt.value;
       }
     }
 
@@ -371,6 +420,7 @@
     initSearch();
     renderGarments(document);
     initProductGrids();
+    initSlider();
     initReviews();
     initNewsletter();
     initQuoteForm();
