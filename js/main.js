@@ -195,8 +195,13 @@
         history.replaceState(null, "", url);
       }
     }
+    var search = $("[data-product-search]");
+    if (search) {
+      search.value = q;
+      search.addEventListener("input", function () { q = search.value.trim().toLowerCase(); apply(current, false); });
+    }
     chips.forEach(function (c) {
-      c.addEventListener("click", function () { q = ""; apply(c.dataset.filter, true); });
+      c.addEventListener("click", function () { apply(c.dataset.filter, true); });
     });
     apply(current, false);
   }
