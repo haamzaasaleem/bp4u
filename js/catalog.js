@@ -103,6 +103,20 @@
         '<path d="M20 236 L54 244 L52 258 L18 250 Z M280 236 L246 244 L248 258 L282 250 Z" fill="' + p.deep + '" stroke="' + p.line + '" stroke-width="1.5" stroke-linejoin="round"/>' +
         '<rect x="74" y="256" width="152" height="16" fill="' + p.deep + '" stroke="' + p.line + '" stroke-width="1.5"/>' +
         front;
+    },
+
+    /* side view of a sleeve, used for left / right sleeve decoration */
+    sleeveLong: function (p) {
+      return '' +
+        '<path d="M104 34 C130 22 170 22 196 34 L184 244 L116 244 Z" fill="' + p.fill + '" stroke="' + p.line + '" stroke-width="2" stroke-linejoin="round"/>' +
+        '<path d="M150 28 L150 244" stroke="' + p.line + '" stroke-width="1.2" opacity=".35"/>' +
+        '<path d="M116 244 L184 244 L182 268 L118 268 Z" fill="' + p.deep + '" stroke="' + p.line + '" stroke-width="1.5" stroke-linejoin="round"/>';
+    },
+    sleeveShort: function (p) {
+      return '' +
+        '<path d="M108 168 L192 168 L196 284 L104 284 Z" fill="' + p.deep + '" stroke="' + p.line + '" stroke-width="1.5" stroke-linejoin="round" opacity=".8"/>' +
+        '<path d="M96 62 C128 46 172 46 204 62 L214 168 L86 168 Z" fill="' + p.fill + '" stroke="' + p.line + '" stroke-width="2" stroke-linejoin="round"/>' +
+        '<path d="M92 156 L208 156" stroke="' + p.stitch + '" stroke-width="1.5" stroke-dasharray="3 3"/>';
     }
   };
 
@@ -113,6 +127,19 @@
     var cls = opts.className ? ' class="' + opts.className + '"' : '';
     return '<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"' + cls + label + '>' +
       drawings[type](p, opts.view || "front") + '</svg>';
+  }
+
+  /* Draw one studio view (front / back / sleeves) of a garment */
+  function viewSVG(garment, viewId, color, opts) {
+    var v = VIEWS[garment].filter(function (x) { return x.id === viewId; })[0];
+    var p = palette(color);
+    opts = opts || {};
+    var size = opts.size ? ' width="' + opts.size + '" height="' + opts.size + '"' : '';
+    var body = v.draw === "sleeveLong" || v.draw === "sleeveShort"
+      ? drawings[v.draw](p)
+      : drawings[garment](p, v.draw);
+    var flip = v.mirror ? '<g transform="translate(300 0) scale(-1 1)">' + body + '</g>' : body;
+    return '<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"' + size + ' aria-hidden="true">' + flip + '</svg>';
   }
 
   /* ---------- color library ---------- */
@@ -180,9 +207,66 @@
     ]
   };
 
+  /* ----------------------------------------------------------------------
+     Design Studio views. `area` is the printable/stitchable zone in
+     viewBox units [x, y, w, h]; `inW` is that zone's real width in inches.
+     Presets place artwork at standard spots (inches from the zone's
+     top-left: cx = center x, top = top edge, w = artwork width).
+     ---------------------------------------------------------------------- */
+  var VIEWS = {
+    tee: [
+      { id: "front", label: "Front", draw: "front", area: [96, 72, 108, 140], inW: 12,
+        presets: [{ label: "Left chest", cx: 10, top: 0.9, w: 3.5 }, { label: "Center chest", cx: 6, top: 1, w: 9 }, { label: "Full front", cx: 6, top: 1.5, w: 11 }] },
+      { id: "back", label: "Back", draw: "back", area: [96, 58, 108, 150], inW: 12,
+        presets: [{ label: "Upper back", cx: 6, top: 1, w: 10 }, { label: "Full back", cx: 6, top: 2, w: 11 }] },
+      { id: "lsleeve", label: "L. Sleeve", draw: "sleeveShort", area: [118, 76, 64, 64], inW: 3.5,
+        presets: [{ label: "Sleeve", cx: 1.75, top: 0.4, w: 3 }] },
+      { id: "rsleeve", label: "R. Sleeve", draw: "sleeveShort", mirror: true, area: [118, 76, 64, 64], inW: 3.5,
+        presets: [{ label: "Sleeve", cx: 1.75, top: 0.4, w: 3 }] }
+    ],
+    polo: [
+      { id: "front", label: "Front", draw: "front", area: [104, 56, 92, 150], inW: 11,
+        presets: [{ label: "Left chest", cx: 9.3, top: 3.3, w: 3.5 }, { label: "Right chest", cx: 1.9, top: 3.3, w: 3.5 }, { label: "Below placket", cx: 5.5, top: 6.4, w: 8 }] },
+      { id: "back", label: "Back", draw: "back", area: [100, 56, 100, 140], inW: 11,
+        presets: [{ label: "Upper back", cx: 5.5, top: 1, w: 9 }, { label: "Full back", cx: 5.5, top: 2, w: 10 }] },
+      { id: "lsleeve", label: "L. Sleeve", draw: "sleeveShort", area: [118, 76, 64, 64], inW: 3.5,
+        presets: [{ label: "Sleeve", cx: 1.75, top: 0.4, w: 3 }] },
+      { id: "rsleeve", label: "R. Sleeve", draw: "sleeveShort", mirror: true, area: [118, 76, 64, 64], inW: 3.5,
+        presets: [{ label: "Sleeve", cx: 1.75, top: 0.4, w: 3 }] }
+    ],
+    jacket: [
+      { id: "front", label: "Front", draw: "front", area: [80, 52, 140, 190], inW: 14,
+        presets: [{ label: "Left chest", cx: 10.2, top: 2.8, w: 3.5 }, { label: "Right chest", cx: 3.8, top: 2.8, w: 3.5 }] },
+      { id: "back", label: "Back", draw: "back", area: [86, 56, 128, 150], inW: 12,
+        presets: [{ label: "Upper back", cx: 6, top: 1, w: 10 }, { label: "Full back", cx: 6, top: 2, w: 11 }] },
+      { id: "lsleeve", label: "L. Sleeve", draw: "sleeveLong", area: [124, 56, 52, 120], inW: 3.5,
+        presets: [{ label: "Upper sleeve", cx: 1.75, top: 0.5, w: 3 }] },
+      { id: "rsleeve", label: "R. Sleeve", draw: "sleeveLong", mirror: true, area: [124, 56, 52, 120], inW: 3.5,
+        presets: [{ label: "Upper sleeve", cx: 1.75, top: 0.5, w: 3 }] }
+    ],
+    hat: [
+      { id: "front", label: "Front", draw: "front", area: [104, 102, 92, 62], inW: 4.5,
+        presets: [{ label: "Front center", cx: 2.25, top: 0.4, w: 3.5 }] }
+    ]
+  };
+
+  /* Embroidery thread palette (also offered for printing) */
+  var THREADS = [
+    { name: "White", hex: "#ffffff" }, { name: "Black", hex: "#111111" }, { name: "Silver", hex: "#a7a9ac" },
+    { name: "Charcoal", hex: "#4d4f53" }, { name: "Navy", hex: "#1f2a44" }, { name: "Royal", hex: "#2d5bb7" },
+    { name: "Light Blue", hex: "#8db7e1" }, { name: "Teal", hex: "#0e7c86" }, { name: "Turquoise", hex: "#2bb3c6" },
+    { name: "Kelly Green", hex: "#2e8b3a" }, { name: "Lime", hex: "#7fd858" }, { name: "Forest", hex: "#24533b" },
+    { name: "Yellow", hex: "#f7d23e" }, { name: "Gold", hex: "#e0a526" }, { name: "Orange", hex: "#e36c2c" },
+    { name: "Red", hex: "#c0282d" }, { name: "Maroon", hex: "#6d1f2f" }, { name: "Pink", hex: "#e9a3b8" },
+    { name: "Hot Pink", hex: "#d9478a" }, { name: "Purple", hex: "#5b3a8e" }, { name: "Lavender", hex: "#a893c9" },
+    { name: "Tan", hex: "#c7b48b" }, { name: "Brown", hex: "#6b4a2b" }, { name: "Metallic Gold", hex: "#c9a64b" }
+  ];
+
   /* Placeholder decoration pricing + volume tiers */
   var PRICING = {
     decoration: { embroidery: 8, print: 5 },
+    largeEmbroidery: 4,      // extra per location when stitched art is over 16 sq in
+    extraPrintColor: 1,      // extra per location for each print color after the first
     tiers: [
       { min: 96, off: 0.25 },
       { min: 48, off: 0.2 },
@@ -201,6 +285,9 @@
     shade: shade,
     isLight: isLight,
     garmentSVG: garmentSVG,
+    viewSVG: viewSVG,
+    VIEWS: VIEWS,
+    THREADS: THREADS,
     COLORS: COLORS,
     CATEGORIES: CATEGORIES,
     PRODUCTS: PRODUCTS,
