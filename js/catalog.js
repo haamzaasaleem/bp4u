@@ -276,6 +276,52 @@
     ]
   };
 
+  /* ---------- real product photos (js/product-photos.js) ---------- */
+  function photoConfig(productId) {
+    var all = global.BP_PHOTOS || {};
+    var c = all[productId];
+    return c && c.colors && c.colors.length && c.views ? c : null;
+  }
+  function photoURL(productId, colorKey, viewId) {
+    var c = photoConfig(productId);
+    if (!c || c.colors.indexOf(colorKey) === -1 || !c.views[viewId]) return null;
+    return "assets/products/" + productId + "/" + colorKey + "-" + viewId + ".jpg";
+  }
+  /* colors a product is offered in (photo colors win when photos exist) */
+  function colorsFor(product) {
+    var c = photoConfig(product.id);
+    if (!c) return product.colors;
+    var list = product.colors.filter(function (k) { return c.colors.indexOf(k) !== -1; });
+    return list.length ? list : product.colors;
+  }
+  /* studio views for a product, with photo print areas when available */
+  function viewsFor(product) {
+    var base = VIEWS[product.garment];
+    var c = photoConfig(product.id);
+    if (!c) return base;
+    return base.filter(function (v) { return c.views[v.id]; }).map(function (v) {
+      var pv = c.views[v.id], out = {};
+      Object.keys(v).forEach(function (k) { out[k] = v[k]; });
+      out.area = pv.area;
+      out.inW = pv.inW || v.inW;
+      out.presets = pv.presets || v.presets.map(function (p) {
+        // keep presets inside a zone that may be narrower than the drawing's
+        var w = Math.min(p.w, out.inW * 0.95);
+        return { label: p.label, w: w, top: p.top, cx: Math.min(Math.max(p.cx, w / 2), out.inW - w / 2) };
+      });
+      out.photo = true;
+      return out;
+    });
+  }
+  /* an <img> or SVG for a product in a color/side */
+  function productImage(product, colorKey, viewId, opts) {
+    opts = opts || {};
+    var url = photoURL(product.id, colorKey, viewId || "front");
+    if (url) return '<img class="product-photo" src="' + url + '" alt="' + (opts.label || "") + '"' + (opts.lazy === false ? "" : ' loading="lazy"') + '>';
+    var hex = (COLORS[colorKey] || COLORS[product.colors[0]]).hex;
+    return garmentSVG(product.garment, hex, { label: opts.label, view: viewId === "back" ? "back" : "front" });
+  }
+
   function getProduct(id) {
     for (var i = 0; i < PRODUCTS.length; i++) if (PRODUCTS[i].id === id) return PRODUCTS[i];
     return null;
@@ -286,6 +332,11 @@
     isLight: isLight,
     garmentSVG: garmentSVG,
     viewSVG: viewSVG,
+    photoConfig: photoConfig,
+    photoURL: photoURL,
+    colorsFor: colorsFor,
+    viewsFor: viewsFor,
+    productImage: productImage,
     VIEWS: VIEWS,
     THREADS: THREADS,
     COLORS: COLORS,

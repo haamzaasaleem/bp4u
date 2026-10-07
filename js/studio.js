@@ -62,7 +62,13 @@
   /* ---------- helpers ---------- */
   function product() { return BP.getProduct(state.productId); }
   function garment() { return product().garment; }
-  function views() { return BP.VIEWS[garment()]; }
+  function views() { return BP.viewsFor(product()); }
+  function photo(viewId) { return BP.photoURL(state.productId, state.colorKey, viewId || state.viewId); }
+  /* garment picture for a side: real photo when we have one, drawing otherwise */
+  function garmentArt(viewId) {
+    var url = photo(viewId);
+    return url ? '<img class="garment-photo" src="' + url + '" alt="" draggable="false">' : BP.viewSVG(garment(), viewId, colorHex());
+  }
   function view(id) { return views().filter(function (v) { return v.id === (id || state.viewId); })[0] || views()[0]; }
   function area(v) { v = v || view(); return { x: v.area[0] * S, y: v.area[1] * S, w: v.area[2] * S, h: v.area[3] * S }; }
   function ppi(v) { v = v || view(); return (v.area[2] * S) / v.inW; }
@@ -179,7 +185,8 @@
     views().forEach(function (v) {
       var layer = $('.view-layer[data-view="' + v.id + '"]');
       if (!layer) return;
-      $("[data-garment-bg]", layer).innerHTML = BP.viewSVG(garment(), v.id, colorHex());
+      $("[data-garment-bg]", layer).innerHTML = garmentArt(v.id);
+      layer.classList.toggle("has-photo", !!photo(v.id));
       $(".print-guide", layer).classList.toggle("is-dark", !BP.isLight(colorHex()));
       $(".print-guide span", layer).textContent = v.inW + "″ × " + inH(v) + "″ " + (isEmb() ? "stitch" : "print") + " area";
     });
@@ -216,7 +223,7 @@
   function buildViewThumbs() {
     $("[data-view-thumbs]").innerHTML = views().map(function (v) {
       return '<button type="button" class="view-thumb" data-view-thumb="' + v.id + '" aria-pressed="false">' +
-        '<span class="vt-img">' + BP.viewSVG(garment(), v.id, colorHex()) + '<img alt="" data-thumb-art></span>' +
+        '<span class="vt-img"><span class="vt-garment">' + garmentArt(v.id) + '</span><img alt="" data-thumb-art></span>' +
         '<span class="vt-label">' + v.label + '</span><span class="vt-dot" hidden></span></button>';
     }).join("");
   }
@@ -229,7 +236,7 @@
       var btn = $('[data-view-thumb="' + v.id + '"]');
       var c = canvases[v.id];
       if (!btn || !c) return;
-      $(".vt-img svg", btn).outerHTML = BP.viewSVG(garment(), v.id, colorHex());
+      $(".vt-garment", btn).innerHTML = garmentArt(v.id);
       var has = c.getObjects().length > 0;
       var img = $("[data-thumb-art]", btn);
       if (has) {
@@ -539,10 +546,10 @@
     }).join("");
     $("[data-style-list]").innerHTML = BP.PRODUCTS.filter(function (x) { return x.cat === p.cat; }).map(function (x) {
       return '<button type="button" class="style-item" data-style="' + x.id + '" aria-pressed="' + (x.id === p.id) + '">' +
-        BP.garmentSVG(x.garment, BP.COLORS[x.colors[0]].hex) +
+        BP.productImage(x, BP.colorsFor(x)[0], "front") +
         '<span><strong>' + esc(x.name) + '</strong><small>From $' + x.price.toFixed(2) + ' · ' + x.methods.map(function (m) { return m === "print" ? "Print" : "Embroidery"; }).join(" / ") + '</small></span></button>';
     }).join("");
-    $("[data-color-list]").innerHTML = p.colors.map(function (k) {
+    $("[data-color-list]").innerHTML = BP.colorsFor(p).map(function (k) {
       var c = BP.COLORS[k];
       return '<button type="button" class="swatch swatch--lg" style="background:' + c.hex + '" data-color="' + k + '" aria-label="' + c.name + '" title="' + c.name + '" aria-pressed="' + (k === state.colorKey) + '"></button>';
     }).join("");
@@ -557,11 +564,13 @@
 
   function selectProduct(id, colorKey) {
     var p = BP.getProduct(id) || BP.PRODUCTS[0];
-    var prevGarment = state.productId ? garment() : null;
+    var prevViews = state.productId ? JSON.stringify(views()) : null;
     state.productId = p.id;
-    state.colorKey = colorKey && p.colors.indexOf(colorKey) !== -1 ? colorKey : (p.colors.indexOf(state.colorKey) !== -1 ? state.colorKey : p.colors[0]);
+    var colors = BP.colorsFor(p);
+    state.colorKey = colorKey && colors.indexOf(colorKey) !== -1 ? colorKey : (colors.indexOf(state.colorKey) !== -1 ? state.colorKey : colors[0]);
     if (p.methods.indexOf(state.method) === -1) setMethod(p.methods[0], true);
-    if (prevGarment !== p.garment) buildStage(); else paintGarments();
+    // rebuild the canvases when the sides or their print areas change
+    if (prevViews !== JSON.stringify(views())) buildStage(); else paintGarments();
     renderProductPanel();
     renderSizeInputs();
     updateBottomBar();
@@ -831,7 +840,7 @@
     var p = product();
     $("[data-bar-name]").textContent = p.name;
     $("[data-bar-color]").textContent = BP.COLORS[state.colorKey].name + " · " + (isEmb() ? "Embroidery" : "Screen Print");
-    $("[data-bar-thumb]").innerHTML = BP.garmentSVG(p.garment, colorHex());
+    $("[data-bar-thumb]").innerHTML = BP.productImage(p, state.colorKey, "front", { lazy: false });
     $("[data-bar-swatch]").style.background = colorHex();
     updatePriceBar();
   }
@@ -947,14 +956,18 @@
   }
   function exportMockup(v, size) {
     size = size || 1200;
-    var svg = BP.viewSVG(garment(), v.id, colorHex(), { size: size });
+    var url = photo(v.id);
+    var bg = url || "data:image/svg+xml;charset=utf-8," + encodeURIComponent(BP.viewSVG(garment(), v.id, colorHex(), { size: size }));
     var art = canvases[v.id].toDataURL({ format: "png", multiplier: size / CANVAS, enableRetinaScaling: false });
-    return Promise.all([loadImage("data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg)), loadImage(art)]).then(function (imgs) {
+    return Promise.all([loadImage(bg), loadImage(art)]).then(function (imgs) {
       var c = document.createElement("canvas");
       c.width = size; c.height = size;
       var ctx = c.getContext("2d");
-      ctx.fillStyle = "#f4f7fb"; ctx.fillRect(0, 0, size, size);
-      ctx.drawImage(imgs[0], 0, 0, size, size);
+      ctx.fillStyle = url ? "#ffffff" : "#f4f7fb"; ctx.fillRect(0, 0, size, size);
+      // photos are square (photo-setup.html), but fit anything just in case
+      var g = imgs[0], k = Math.min(size / (g.naturalWidth || size), size / (g.naturalHeight || size));
+      var gw = (g.naturalWidth || size) * k, gh = (g.naturalHeight || size) * k;
+      ctx.drawImage(g, (size - gw) / 2, (size - gh) / 2, gw, gh);
       ctx.drawImage(imgs[1], 0, 0, size, size);
       return c.toDataURL("image/png");
     });
@@ -971,7 +984,7 @@
     var order = {
       orderId: id, createdAt: new Date().toISOString(), designName: state.designName,
       customer: customer,
-      product: { id: p.id, name: p.name, category: BP.CATEGORIES[p.cat].name, color: BP.COLORS[state.colorKey].name, colorHex: colorHex() },
+      product: { id: p.id, name: p.name, category: BP.CATEGORIES[p.cat].name, color: BP.COLORS[state.colorKey].name, colorHex: colorHex(), photos: !!BP.photoConfig(p.id) },
       decoration: isEmb() ? "Embroidery" : "Screen Print",
       quantities: pr.q, totalPieces: pr.qty,
       estimate: { each: +pr.each.toFixed(2), total: +pr.total.toFixed(2), discount: pr.off },

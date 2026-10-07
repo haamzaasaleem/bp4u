@@ -17,7 +17,8 @@ python3 -m http.server 8000   # then visit http://localhost:8000
 | `index.html` | Homepage: family hero with Shawn & Kimberly, "What we make" grid, banner slider, The Embroiderology Dept. (medical), favorites, business printing, more services (websites, SEO, marketing), how it works, our story, FAQ, CTA |
 | `products.html` | Catalog with category filters (`?cat=medical\|polos\|hats\|tees`) and live search |
 | `design.html` | Design Studio (full-screen app, see below) |
-| `contact.html` | Quote request form; picks up the saved design from the studio (`?from=design`) |
+| `contact.html` | Quote request form |
+| `photo-setup.html` | Internal tool: prepare product photos and their print areas for the studio |
 
 ## Design Studio
 
@@ -28,6 +29,17 @@ python3 -m http.server 8000   # then visit http://localhost:8000
 - **Live checks:** size readout in inches, text-too-small for embroidery, low-resolution images, art outside the area
 - **Undo/redo, keyboard shortcuts, autosave** (browser storage), zoom
 - **Get Price → order:** quantities by size (or from the names list), estimate with bulk tiers, then contact details
+
+### Real product photos
+
+The studio and product cards use real photos wherever they exist and fall back to drawings everywhere else.
+
+1. Get photos from your supplier account (SanMar, S&S Activewear…) or take your own: front-facing, plain background.
+2. Open **`photo-setup.html`**: pick product, color, and side, load the photo, drag the green box over the print area, and enter its real width in inches.
+3. **Download photo** and save it to `assets/products/<product>/<color>-<side>.jpg`.
+4. **Save side**, repeat, then copy the settings into `js/product-photos.js`.
+
+When a product has photos, the studio only offers the colors and sides you've photographed.
 
 ### What the shop receives
 
@@ -57,6 +69,7 @@ js/catalog.js      products, colors, studio views/print areas, threads, pricing 
 js/main.js         nav, product cards, forms, slider, scroll reveals
 js/studio.js       Design Studio
 js/config.js       order endpoint + shop contact for the studio
+js/product-photos.js  which products/colors/sides have real photos + their print areas
 js/vendor/         Fabric.js 5.3.0 and JSZip 3.10.1 (MIT)
 css/studio.css     Design Studio layout
 api/order.php      order receiver for PHP hosting
@@ -70,7 +83,7 @@ assets/img/        logos, favicon, owners photo, Embroiderology logo, banners/
 - **Reviews**: no reviews section yet; add one once you have real Google/Facebook reviews
 - **More social links**: only Facebook is linked right now
 - **Embroiderology wide banner**: save it as `assets/img/banners/embroiderology.jpg` and it appears above the medical section automatically
-- **Product photos**: garments are drawn as SVG so every color works without photography. To use a real photo, add `image: "assets/img/products/xyz.jpg"` to a product in `js/catalog.js`
+- **Product photos**: add them with `photo-setup.html` (see Design Studio → Real product photos)
 - **Forms**: the quote and newsletter forms only show a success message for now (no backend yet)
 
 ## Next steps

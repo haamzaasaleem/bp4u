@@ -65,7 +65,7 @@
   display: flex; align-items: center; gap: 12px; text-align: left; border: 2px solid var(--line); border-radius: 12px; background: #fff;
   padding: 8px 10px; cursor: pointer;
 }
-.style-item svg { width: 48px; height: 48px; flex: none; }
+.style-item svg, .style-item img { width: 48px; height: 48px; flex: none; object-fit: contain; }
 .style-item strong { display: block; font-size: .9rem; }
 .style-item small { color: var(--muted); font-size: .78rem; }
 .style-item[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
@@ -147,6 +147,10 @@
 .view-layer[hidden] { display: none; }
 .garment-bg { position: absolute; inset: 0; pointer-events: none; }
 .garment-bg svg { width: 100%; height: 100%; filter: drop-shadow(0 18px 24px rgba(15,42,92,.18)); }
+.garment-photo { width: 100%; height: 100%; object-fit: contain; display: block; user-select: none; }
+.has-photo .garment-bg { background: #fff; border-radius: 14px; box-shadow: 0 10px 30px rgba(15,42,92,.10); }
+.vt-garment { position: absolute; inset: 0; }
+.vt-garment img, .vt-garment svg { width: 100%; height: 100%; object-fit: contain; }
 .view-layer .canvas-container { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
 .view-layer .canvas-container canvas { width: 100% !important; height: 100% !important; }
 .print-guide {
@@ -178,7 +182,7 @@
 }
 .view-thumb[aria-pressed="true"] { border-color: var(--accent); background: #fff; }
 .vt-img { position: relative; width: 64px; height: 64px; display: block; }
-.vt-img svg, .vt-img img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.vt-img > img { position: absolute; inset: 0; width: 100%; height: 100%; }
 .vt-label { font-size: .74rem; font-weight: 600; }
 .vt-dot { position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
 .zoom-btn { padding: 10px 4px; }
@@ -189,7 +193,7 @@
 .studio-bar { background: #fff; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 18px; }
 .bar-product { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .bar-thumb { width: 48px; height: 48px; background: var(--cream); border-radius: 10px; padding: 4px; flex: none; }
-.bar-thumb svg { width: 100%; height: 100%; }
+.bar-thumb svg, .bar-thumb img { width: 100%; height: 100%; object-fit: contain; }
 .bar-product strong { display: block; font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bar-meta { font-size: .82rem; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .bar-meta .link-btn { margin: 0; font-size: .82rem; }

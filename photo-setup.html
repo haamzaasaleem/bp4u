@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Photo Setup | Business Printing 4 U</title>
+  <link rel="icon" type="image/png" href="assets/img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Libre+Baskerville:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body { background: var(--cream); }
+    .ps-top { background: var(--navy); color: #fff; padding: 16px 0; }
+    .ps-top .container { display: flex; align-items: center; gap: 16px; justify-content: space-between; }
+    .ps-top img { height: 40px; filter: brightness(0) invert(1); }
+    .ps-top h1 { font-size: 1.2rem; margin: 0; color: #fff; }
+    .ps-grid { display: grid; grid-template-columns: 360px 1fr; gap: 28px; padding: 28px 20px 60px; align-items: start; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+    .card + .card { margin-top: 16px; }
+    .card h2 { font-family: var(--font-body); font-size: .8rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .steps-mini { margin: 0; padding-left: 18px; color: var(--ink-soft); font-size: .9rem; }
+    .steps-mini li { margin-bottom: 6px; }
+    .editor-wrap { position: sticky; top: 20px; }
+    .editor { position: relative; width: min(640px, 100%); aspect-ratio: 1 / 1; background: #fff; border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; touch-action: none; }
+    .editor canvas { width: 100%; height: 100%; display: block; }
+    .editor .empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; color: var(--muted); padding: 30px; }
+    .editor.is-drag { outline: 3px dashed var(--accent); }
+    .zone { position: absolute; border: 2px dashed var(--accent); background: rgba(46,133,64,.12); cursor: move; }
+    .zone span { position: absolute; left: 50%; top: -26px; transform: translateX(-50%); white-space: nowrap; background: var(--accent); color: #fff; font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+    .zone i { position: absolute; width: 14px; height: 14px; background: #fff; border: 2px solid var(--accent); border-radius: 50%; }
+    .zone i[data-h="nw"] { left: -8px; top: -8px; cursor: nwse-resize; }
+    .zone i[data-h="ne"] { right: -8px; top: -8px; cursor: nesw-resize; }
+    .zone i[data-h="sw"] { left: -8px; bottom: -8px; cursor: nesw-resize; }
+    .zone i[data-h="se"] { right: -8px; bottom: -8px; cursor: nwse-resize; }
+    .editor-tools { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+    .path { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85rem; background: var(--cream); border-radius: 8px; padding: 8px 10px; word-break: break-all; }
+    textarea.code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; min-height: 220px; }
+    .saved-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: .88rem; }
+    .saved-list li { display: flex; justify-content: space-between; background: var(--cream); border-radius: 8px; padding: 6px 10px; }
+    @media (max-width: 900px) { .ps-grid { grid-template-columns: 1fr; } .editor-wrap { position: static; } }
+  </style>
+</head>
+<body>
+  <header class="ps-top">
+    <div class="container">
+      <h1>Product Photo Setup</h1>
+      <a class="btn btn--light btn--sm" href="design.html">Open Design Studio</a>
+    </div>
+  </header>
+
+  <div class="container ps-grid">
+    <div>
+      <div class="card">
+        <h2>How it works</h2>
+        <ol class="steps-mini">
+          <li>Pick the product, color, and side.</li>
+          <li>Load the photo (front-facing, plain background works best).</li>
+          <li>Drag the green box over where logos can go and enter its real width.</li>
+          <li><b>Download photo</b> and save it to the folder shown.</li>
+          <li><b>Save side</b>, repeat for other sides/colors, then copy the settings into <code>js/product-photos.js</code>.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h2>1 · What is this photo?</h2>
+        <div class="field"><label for="ps-product">Product</label><select id="ps-product"></select></div>
+        <div class="field-row">
+          <div class="field"><label for="ps-color">Color</label><select id="ps-color"></select></div>
+          <div class="field"><label for="ps-view">Side</label><select id="ps-view"></select></div>
+        </div>
+        <label class="upload" style="display:block;border:2px dashed #c3cede;border-radius:12px;padding:16px;text-align:center;cursor:pointer">
+          <input type="file" accept="image/*" id="ps-file" hidden>
+          <strong>Choose photo</strong><br><small class="hint">or drop it on the preview</small>
+        </label>
+      </div>
+
+      <div class="card">
+        <h2>2 · Print / stitch area</h2>
+        <div class="field">
+          <label for="ps-inw">Real width of the green box (inches)</label>
+          <input id="ps-inw" type="number" min="1" max="20" step="0.25">
+          <p class="hint">Typical: jacket/tee front 12–14″, back 12″, sleeve 3.5″, hat front 4.5″. Measure a real garment if you can.</p>
+        </div>
+        <div class="field"><span class="label">Save the photo as</span><div class="path" id="ps-path"></div></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn--outline btn--sm" type="button" id="ps-download" disabled>Download photo</button>
+          <button class="btn btn--primary btn--sm" type="button" id="ps-save" disabled>Save side</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>3 · Settings for js/product-photos.js</h2>
+        <ul class="saved-list" id="ps-saved"></ul>
+        <div class="field" style="margin-top:12px">
+          <textarea class="code" id="ps-out" readonly></textarea>
+        </div>
+        <button class="btn btn--dark btn--sm" type="button" id="ps-copy">Copy settings</button>
+        <p class="hint">Replace the product’s entry inside <code>window.BP_PHOTOS = { … }</code>. Colors list every color you saved photos for.</p>
+      </div>
+    </div>
+
+    <div class="editor-wrap">
+      <div class="editor" id="ps-editor">
+        <canvas id="ps-canvas" width="1200" height="1200"></canvas>
+        <div class="empty" id="ps-empty"><div><strong>No photo yet</strong><br>Choose a photo or drop one here.<br>It will be squared to 1200×1200 automatically.</div></div>
+        <div class="zone" id="ps-zone" hidden><span id="ps-zone-label"></span><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div>
+      </div>
+      <div class="editor-tools">
+        <label class="hint"><input type="checkbox" id="ps-white" checked> Fill background with white</label>
+        <button class="link-btn" type="button" id="ps-reset">Reset box to default</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" role="status" aria-live="polite"></div>
+  <script src="js/product-photos.js"></script>
+  <script src="js/catalog.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    var $ = function (id) { return document.getElementById(id); };
+    var STORE = "bp4u-photo-setup";
+    var SIZE = 1200;
+    var img = null;          // the loaded source image
+    var zone = null;         // [x, y, w, h] in 0–300 units
+    var saved = load();      // { productId: { colors: [], views: { side: {area, inW} } } }
+
+    function load() {
+      var base = JSON.parse(JSON.stringify(window.BP_PHOTOS || {}));
+      try { var s = JSON.parse(localStorage.getItem(STORE) || "null"); if (s) Object.keys(s).forEach(function (k) { base[k] = s[k]; }); } catch (e) {}
+      return base;
+    }
+    function persist() { try { localStorage.setItem(STORE, JSON.stringify(saved)); } catch (e) {} }
+
+    function product() { return BP.getProduct($("ps-product").value); }
+    function defaultView() { var id = $("ps-view").value; return BP.VIEWS[product().garment].filter(function (v) { return v.id === id; })[0]; }
+
+    // ---- selects ----
+    $("ps-product").innerHTML = Object.keys(BP.CATEGORIES).map(function (c) {
+      return '<optgroup label="' + BP.CATEGORIES[c].name + '">' + BP.PRODUCTS.filter(function (p) { return p.cat === c; }).map(function (p) {
+        return '<option value="' + p.id + '">' + p.name + '</option>';
+      }).join("") + '</optgroup>';
+    }).join("");
+    function fillOptions() {
+      var p = product();
+      $("ps-color").innerHTML = p.colors.map(function (k) { return '<option value="' + k + '">' + BP.COLORS[k].name + '</option>'; }).join("");
+      $("ps-view").innerHTML = BP.VIEWS[p.garment].map(function (v) { return '<option value="' + v.id + '">' + v.label + '</option>'; }).join("");
+      resetZone();
+      render();
+    }
+    function resetZone() {
+      var p = product(), side = $("ps-view").value, cfg = saved[p.id];
+      if (cfg && cfg.views && cfg.views[side]) { zone = cfg.views[side].area.slice(); $("ps-inw").value = cfg.views[side].inW; }
+      else { var v = defaultView(); zone = v.area.slice(); $("ps-inw").value = v.inW; }
+      placeZone();
+    }
+
+    // ---- image loading + squaring ----
+    function loadFile(file) {
+      if (!file || !/^image\//.test(file.type)) return;
+      var r = new FileReader();
+      r.onload = function () {
+        var i = new Image();
+        i.onload = function () { img = i; drawPhoto(); };
+        i.src = r.result;
+      };
+      r.readAsDataURL(file);
+    }
+    function cornerColor(i) {
+      var c = document.createElement("canvas"); c.width = i.naturalWidth; c.height = i.naturalHeight;
+      var x = c.getContext("2d"); x.drawImage(i, 0, 0);
+      var pts = [[2, 2], [c.width - 3, 2], [2, c.height - 3], [c.width - 3, c.height - 3]], sum = [0, 0, 0];
+      pts.forEach(function (p) { var d = x.getImageData(p[0], p[1], 1, 1).data; sum[0] += d[0]; sum[1] += d[1]; sum[2] += d[2]; });
+      return "rgb(" + sum.map(function (v) { return Math.round(v / 4); }).join(",") + ")";
+    }
+    function drawPhoto() {
+      var c = $("ps-canvas"), x = c.getContext("2d");
+      x.fillStyle = $("ps-white").checked ? "#ffffff" : cornerColor(img);
+      x.fillRect(0, 0, SIZE, SIZE);
+      var k = Math.min(SIZE / img.naturalWidth, SIZE / img.naturalHeight);
+      var w = img.naturalWidth * k, h = img.naturalHeight * k;
+      x.drawImage(img, (SIZE - w) / 2, (SIZE - h) / 2, w, h);
+      $("ps-empty").hidden = true;
+      $("ps-zone").hidden = false;
+      $("ps-download").disabled = false;
+      $("ps-save").disabled = false;
+      placeZone();
+    }
+
+    // ---- zone box ----
+    function placeZone() {
+      var z = $("ps-zone");
+      z.style.left = (zone[0] / 3) + "%"; z.style.top = (zone[1] / 3) + "%";
+      z.style.width = (zone[2] / 3) + "%"; z.style.height = (zone[3] / 3) + "%";
+      var inW = +$("ps-inw").value || 1;
+      $("ps-zone-label").textContent = inW + "″ × " + (zone[3] / zone[2] * inW).toFixed(2) + "″";
+    }
+    (function dragZone() {
+      var ed = $("ps-editor"), z = $("ps-zone"), start = null;
+      z.addEventListener("pointerdown", function (e) {
+        e.preventDefault();
+        z.setPointerCapture(e.pointerId);
+        start = { x: e.clientX, y: e.clientY, z: zone.slice(), h: e.target.dataset.h || null };
+      });
+      z.addEventListener("pointermove", function (e) {
+        if (!start) return;
+        var k = 300 / ed.getBoundingClientRect().width;
+        var dx = (e.clientX - start.x) * k, dy = (e.clientY - start.y) * k, s = start.z, n = s.slice();
+        if (!start.h) { n[0] = s[0] + dx; n[1] = s[1] + dy; }
+        else {
+          if (start.h.indexOf("w") !== -1) { n[0] = s[0] + dx; n[2] = s[2] - dx; }
+          if (start.h.indexOf("e") !== -1) { n[2] = s[2] + dx; }
+          if (start.h.indexOf("n") !== -1) { n[1] = s[1] + dy; n[3] = s[3] - dy; }
+          if (start.h.indexOf("s") !== -1) { n[3] = s[3] + dy; }
+        }
+        n[2] = Math.max(10, n[2]); n[3] = Math.max(10, n[3]);
+        n[0] = Math.min(Math.max(0, n[0]), 300 - n[2]); n[1] = Math.min(Math.max(0, n[1]), 300 - n[3]);
+        zone = n.map(function (v) { return Math.round(v * 10) / 10; });
+        placeZone();
+      });
+      ["pointerup", "pointercancel"].forEach(function (ev) { z.addEventListener(ev, function () { start = null; }); });
+      ["dragenter", "dragover"].forEach(function (ev) { ed.addEventListener(ev, function (e) { e.preventDefault(); ed.classList.add("is-drag"); }); });
+      ["dragleave", "drop"].forEach(function (ev) { ed.addEventListener(ev, function (e) { e.preventDefault(); ed.classList.remove("is-drag"); }); });
+      ed.addEventListener("drop", function (e) { loadFile(e.dataTransfer.files[0]); });
+    })();
+
+    // ---- output ----
+    function render() {
+      var p = product();
+      $("ps-path").textContent = "assets/products/" + p.id + "/" + $("ps-color").value + "-" + $("ps-view").value + ".jpg";
+      var cfg = saved[p.id];
+      $("ps-saved").innerHTML = cfg ? Object.keys(cfg.views).map(function (side) {
+        return '<li><span>' + side + '</span><span>' + cfg.views[side].inW + '″ wide</span></li>';
+      }).join("") + '<li><span>Colors</span><span>' + cfg.colors.join(", ") + '</span></li>' : '<li><span>Nothing saved for this product yet</span></li>';
+      $("ps-out").value = cfg ? '  "' + p.id + '": ' + JSON.stringify(cfg, null, 2).replace(/\n/g, "\n  ") + "," : "";
+    }
+
+    $("ps-product").addEventListener("change", fillOptions);
+    $("ps-color").addEventListener("change", render);
+    $("ps-view").addEventListener("change", function () { resetZone(); render(); });
+    $("ps-file").addEventListener("change", function (e) { loadFile(e.target.files[0]); e.target.value = ""; });
+    $("ps-white").addEventListener("change", function () { if (img) drawPhoto(); });
+    $("ps-inw").addEventListener("input", placeZone);
+    $("ps-reset").addEventListener("click", function () { var v = defaultView(); zone = v.area.slice(); $("ps-inw").value = v.inW; placeZone(); });
+    $("ps-download").addEventListener("click", function () {
+      var a = document.createElement("a");
+      a.href = $("ps-canvas").toDataURL("image/jpeg", 0.9);
+      a.download = $("ps-color").value + "-" + $("ps-view").value + ".jpg";
+      a.click();
+    });
+    $("ps-save").addEventListener("click", function () {
+      var p = product(), color = $("ps-color").value, side = $("ps-view").value;
+      var cfg = saved[p.id] || (saved[p.id] = { colors: [], views: {} });
+      if (cfg.colors.indexOf(color) === -1) cfg.colors.push(color);
+      cfg.views[side] = { area: zone.map(function (v) { return Math.round(v); }), inW: +$("ps-inw").value || defaultView().inW };
+      persist();
+      render();
+      window.BPToast && BPToast("Saved " + side + " for " + p.name + ". Remember to download the photo too.");
+    });
+    $("ps-copy").addEventListener("click", function () {
+      var t = $("ps-out");
+      if (!t.value) return;
+      (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject()).then(function () {
+        window.BPToast && BPToast("Settings copied.");
+      }).catch(function () { t.select(); document.execCommand("copy"); });
+    });
+
+    fillOptions();
+  })();
+  </script>
+</body>
+</html>

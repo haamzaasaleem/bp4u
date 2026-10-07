@@ -92,19 +92,18 @@
 
   /* ---------- Product cards ---------- */
   function productCard(p) {
-    var first = BP.COLORS[p.colors[0]];
-    var swatches = p.colors.map(function (key, i) {
+    var colors = BP.colorsFor(p);
+    var first = BP.COLORS[colors[0]];
+    var swatches = colors.map(function (key, i) {
       var c = BP.COLORS[key];
       return '<button type="button" class="swatch" style="background:' + c.hex + '" data-swatch="' + c.hex +
         '" data-color-key="' + key + '" aria-label="' + c.name + '" aria-pressed="' + (i === 0) + '"></button>';
     }).join("");
     var methods = p.methods.map(function (m) { return m === "print" ? "Printing" : "Embroidery"; }).join(" · ");
-    var media = p.image
-      ? '<img src="' + p.image + '" alt="' + escapeHTML(p.name) + '" loading="lazy">'
-      : BP.garmentSVG(p.garment, first.hex, { label: p.name + " in " + first.name });
+    var media = BP.productImage(p, colors[0], "front", { label: p.name + " in " + first.name });
     return '' +
       '<article class="product-card reveal" data-cat="' + p.cat + '" data-id="' + p.id + '">' +
-        '<a class="product-media" href="design.html?product=' + p.id + '&color=' + p.colors[0] + '" data-card-link>' +
+        '<a class="product-media" href="design.html?product=' + p.id + '&color=' + colors[0] + '" data-card-link>' +
           (p.badge ? '<span class="tag">' + escapeHTML(p.badge) + '</span>' : '') + media +
         '</a>' +
         '<div class="product-body">' +
@@ -114,7 +113,7 @@
           '<div class="swatches">' + swatches + '</div>' +
           '<div class="product-price">From $' + p.price.toFixed(2) + ' <small>/ piece before decoration</small></div>' +
           '<div class="product-actions">' +
-            '<a class="btn btn--primary" href="design.html?product=' + p.id + '&color=' + p.colors[0] + '" data-card-link>Customize</a>' +
+            '<a class="btn btn--primary" href="design.html?product=' + p.id + '&color=' + colors[0] + '" data-card-link>Customize</a>' +
             '<a class="btn btn--outline" href="contact.html?product=' + encodeURIComponent(p.name) + '">Quote</a>' +
           '</div>' +
         '</div>' +
@@ -128,13 +127,11 @@
       var card = sw.closest(".product-card");
       var p = BP.getProduct(card.dataset.id);
       $$("[data-swatch]", card).forEach(function (s) { s.setAttribute("aria-pressed", String(s === sw)); });
-      if (!p.image) {
-        var media = $(".product-media", card);
-        var oldSvg = $("svg", media);
-        var tmp = document.createElement("div");
-        tmp.innerHTML = BP.garmentSVG(p.garment, sw.dataset.swatch, { label: p.name + " in " + BP.COLORS[sw.dataset.colorKey].name });
-        media.replaceChild(tmp.firstChild, oldSvg);
-      }
+      var media = $(".product-media", card);
+      var old = $("svg, img.product-photo", media);
+      var tmp = document.createElement("div");
+      tmp.innerHTML = BP.productImage(p, sw.dataset.colorKey, "front", { label: p.name + " in " + BP.COLORS[sw.dataset.colorKey].name });
+      media.replaceChild(tmp.firstChild, old);
       $$("[data-card-link]", card).forEach(function (a) {
         a.href = "design.html?product=" + p.id + "&color=" + sw.dataset.colorKey;
       });
